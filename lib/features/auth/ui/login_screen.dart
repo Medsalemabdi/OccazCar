@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:occazcar/features/auth/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -8,16 +9,15 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Contrôleurs pour récupérer le texte des champs
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  // Clé pour le formulaire, utile pour la validation
   final _formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
+
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    // Il est important de "nettoyer" les contrôleurs quand le widget est détruit
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -26,100 +26,100 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Connexion'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Connexion'), centerTitle: true),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // Centre les éléments verticalement
-            crossAxisAlignment: CrossAxisAlignment.stretch, // Étire les éléments horizontalement
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Bienvenue !',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                'Bienvenue 👋',
                 textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 40),
 
-              // Champ de texte pour l'email
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
                   labelText: 'Email',
                   prefixIcon: Icon(Icons.email),
-                  border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer votre email';
-                  }
-                  if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
-                    return 'Veuillez entrer un email valide';
-                  }
-                  return null;
-                },
+                validator: (v) =>
+                v == null || v.isEmpty ? 'Email requis' : null,
               ),
               const SizedBox(height: 20),
 
-              // Champ de texte pour le mot de passe
               TextFormField(
                 controller: _passwordController,
-                obscureText: true, // Masque le mot de passe
+                obscureText: true,
                 decoration: const InputDecoration(
                   labelText: 'Mot de passe',
                   prefixIcon: Icon(Icons.lock),
-                  border: OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer votre mot de passe';
-                  }
-                  return null;
-                },
+                validator: (v) =>
+                v == null || v.isEmpty ? 'Mot de passe requis' : null,
               ),
               const SizedBox(height: 30),
 
-              // Bouton de connexion
               ElevatedButton(
-                onPressed: () {
-                  // Vérifie si le formulaire est valide
-                  if (_formKey.currentState!.validate()) {
-                    // Si oui, on peut procéder à la logique de connexion
-                    String email = _emailController.text;
-                    String password = _passwordController.text;
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                  if (!_formKey.currentState!.validate()) return;
 
-                    // TODO: Implémenter la logique d'authentification ici
-                    print('Email: $email, Password: $password');
+                  setState(() => _isLoading = true);
+
+                  try {
+                    await _authService.login(
+                      _emailController.text.trim(),
+                      _passwordController.text.trim(),
+                    );
+
+                    if (!mounted) return;
 
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Connexion en cours...')),
+                      const SnackBar(
+                        content: Text('Connexion réussie'),
+                      ),
                     );
+
+                    // TODO: rediriger vers Buyer/Seller Home
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString())),
+                    );
+                  } finally {
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                    }
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  textStyle: const TextStyle(fontSize: 18),
-                ),
-                child: const Text('Se connecter'),
+                child: _isLoading
+                    ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+                    : const Text('Se connecter'),
               ),
+
               const SizedBox(height: 15),
 
-              // Lien pour aller vers la page d'inscription
-              // ...
-              // Lien pour aller vers la page d'inscription
               TextButton(
                 onPressed: () {
-                  // Navigue vers l'écran d'inscription en utilisant la route nommée
                   Navigator.pushNamed(context, '/register');
                 },
-                child: const Text('Pas encore de compte ? S\'inscrire'),
+                child: const Text("Pas encore de compte ? S'inscrire"),
               ),
-
             ],
           ),
         ),
