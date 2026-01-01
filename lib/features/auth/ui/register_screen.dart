@@ -104,9 +104,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Compte créé avec succès'),
+                        content: Text(
+                          'Compte créé. Veuillez vérifier votre email avant de vous connecter.',
+                        ),
                       ),
                     );
+
 
                     Navigator.pop(context); // retour Login
                   } catch (e) {
