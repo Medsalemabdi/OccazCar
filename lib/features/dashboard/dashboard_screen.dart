@@ -2,11 +2,10 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-// 1. IMPORTATION DES ÉCRANS VENDEUR
-// On importe les "pièces" que vous avez déjà construites.
 import 'package:occazcar/features/seller/ui/screens/create_ad_screen.dart';
 import 'package:occazcar/features/seller/ui/screens/my_ads_screen.dart';
+// 1. IMPORTER L'ÉCRAN DE LA LISTE DES CONVERSATIONS
+import 'package:occazcar/features/offers/ui/screens/conversations_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -28,7 +27,6 @@ class DashboardScreen extends StatelessWidget {
           )
         ],
       ),
-      // 2. LE "COULOIR" EST MAINTENANT UN VRAI MENU
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -43,37 +41,47 @@ class DashboardScreen extends StatelessWidget {
             Text(
               user?.email ?? 'Utilisateur',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 50),
-
-            // 3. LA "PORTE" VERS L'ÉCRAN DE PUBLICATION
             ElevatedButton.icon(
               icon: const Icon(Icons.add_circle_outline),
               label: const Text('Publier une nouvelle annonce'),
               onPressed: () {
-                // Quand on clique, on navigue vers l'écran que vous avez déjà créé.
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const CreateAdScreen()),
                 );
               },
             ),
             const SizedBox(height: 20),
-
-            // 4. LA "PORTE" VERS L'ÉCRAN "MES ANNONCES"
             ElevatedButton.icon(
               icon: const Icon(Icons.list_alt),
               label: const Text('Voir mes annonces'),
-              onPressed: () {
-                // Navigue vers l'autre écran que vous avez créé.
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const MyAdsScreen()),
-                );
-              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 foregroundColor: Theme.of(context).colorScheme.onSecondary,
               ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const MyAdsScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            // 2. BOUTON POUR ACCÉDER À LA MESSAGERIE
+            ElevatedButton.icon(
+              icon: const Icon(Icons.message_outlined),
+              label: const Text('Mes Messages'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (context) => const ConversationsScreen()),
+                );
+              },
             ),
           ],
         ),
@@ -81,3 +89,4 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
+
