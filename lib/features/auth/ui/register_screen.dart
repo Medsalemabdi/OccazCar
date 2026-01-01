@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:occazcar/features/auth/services/auth_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final AuthService _authService = AuthService();
 
@@ -20,23 +21,24 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Connexion'), centerTitle: true),
-      body: Padding(
+      appBar: AppBar(title: const Text('Inscription'), centerTitle: true),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const SizedBox(height: 40),
               const Text(
-                'Bienvenue 👋',
+                'Créer un compte',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
@@ -48,7 +50,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   labelText: 'Email',
                   prefixIcon: Icon(Icons.email),
                 ),
-                keyboardType: TextInputType.emailAddress,
                 validator: (v) =>
                 v == null || v.isEmpty ? 'Email requis' : null,
               ),
@@ -61,8 +62,27 @@ class _LoginScreenState extends State<LoginScreen> {
                   labelText: 'Mot de passe',
                   prefixIcon: Icon(Icons.lock),
                 ),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Mot de passe requis';
+                  if (v.length < 6) {
+                    return 'Minimum 6 caractères';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirmer le mot de passe',
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
                 validator: (v) =>
-                v == null || v.isEmpty ? 'Mot de passe requis' : null,
+                v != _passwordController.text
+                    ? 'Les mots de passe ne correspondent pas'
+                    : null,
               ),
               const SizedBox(height: 30),
 
@@ -75,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   setState(() => _isLoading = true);
 
                   try {
-                    await _authService.login(
+                    await _authService.register(
                       _emailController.text.trim(),
                       _passwordController.text.trim(),
                     );
@@ -84,11 +104,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Connexion réussie'),
+                        content: Text(
+                          'Compte créé. Veuillez vérifier votre email avant de vous connecter.',
+                        ),
                       ),
                     );
 
-                    // TODO: rediriger vers Buyer/Seller Home
+
+                    Navigator.pop(context); // retour Login
                   } catch (e) {
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -109,16 +132,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Colors.white,
                   ),
                 )
-                    : const Text('Se connecter'),
+                    : const Text("S'inscrire"),
               ),
 
-              const SizedBox(height: 15),
-
               TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/register');
-                },
-                child: const Text("Pas encore de compte ? S'inscrire"),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Déjà un compte ? Se connecter'),
               ),
             ],
           ),
