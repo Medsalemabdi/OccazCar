@@ -3,8 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 // 1. Importez vos nouveaux écrans
-import 'package:occazcar/features/auth/presentation/screens/login_screen.dart';
-import 'package:occazcar/features/auth/presentation/screens/register_screen.dart';
+import 'package:occazcar/features/auth/ui/login_screen.dart';
+import 'package:occazcar/features/auth/ui/register_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
