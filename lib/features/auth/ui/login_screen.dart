@@ -1,5 +1,9 @@
+// @/OccazCar/lib/features/auth/ui/login_screen.dart
+
+import 'package:firebase_auth/firebase_auth.dart'; // <-- 1. ON IMPORTE LE SERVICE OFFICIEL
 import 'package:flutter/material.dart';
-import 'package:occazcar/features/auth/services/auth_service.dart';
+
+// On n'importe plus votre 'AuthService' personnel.
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,7 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final AuthService _authService = AuthService();
+  // On n'a plus besoin de 'AuthService _authService = AuthService();'
 
   bool _isLoading = false;
 
@@ -21,6 +25,49 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // 2. LA FONCTION DE CONNEXION QUI DÉCLENCHE LA REDIRECTION
+  Future<void> _login() async {
+    // Valide le formulaire
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Affiche le spinner
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 3. ON APPELLE DIRECTEMENT FIREBASE AUTH
+      // C'est cette ligne qui va "crier" à main.dart : "L'UTILISATEUR EST CONNECTÉ !"
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // Si ça réussit, ON NE FAIT RIEN DE PLUS. La redirection est maintenant automatique.
+      // Pas besoin de 'Navigator.push' ici.
+
+    } on FirebaseAuthException catch (e) {
+      // En cas d'erreur (mot de passe incorrect, etc.), on prévient l'utilisateur
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Email ou mot de passe incorrect."),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      // Quoi qu'il arrive, on arrête le chargement
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -41,79 +88,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 40),
-
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                ),
+                decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
                 keyboardType: TextInputType.emailAddress,
-                validator: (v) =>
-                v == null || v.isEmpty ? 'Email requis' : null,
+                validator: (v) => v == null || v.isEmpty ? 'Email requis' : null,
               ),
               const SizedBox(height: 20),
-
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Mot de passe',
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                validator: (v) =>
-                v == null || v.isEmpty ? 'Mot de passe requis' : null,
+                decoration: const InputDecoration(labelText: 'Mot de passe', prefixIcon: Icon(Icons.lock)),
+                validator: (v) => v == null || v.isEmpty ? 'Mot de passe requis' : null,
               ),
               const SizedBox(height: 30),
-
               ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : () async {
-                  if (!_formKey.currentState!.validate()) return;
-
-                  setState(() => _isLoading = true);
-
-                  try {
-                    await _authService.login(
-                      _emailController.text.trim(),
-                      _passwordController.text.trim(),
-                    );
-
-                    if (!mounted) return;
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Connexion réussie'),
-                      ),
-                    );
-
-                    // TODO: rediriger vers Buyer/Seller Home
-                  } catch (e) {
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString())),
-                    );
-                  } finally {
-                    if (mounted) {
-                      setState(() => _isLoading = false);
-                    }
-                  }
-                },
+                // 4. ON APPELLE LA NOUVELLE FONCTION _login
+                onPressed: _isLoading ? null : _login,
                 child: _isLoading
                     ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+                  width: 22, height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
                     : const Text('Se connecter'),
               ),
-
               const SizedBox(height: 15),
-
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/register');
