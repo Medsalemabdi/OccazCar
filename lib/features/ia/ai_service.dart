@@ -1,10 +1,15 @@
-// lib/features/ia/ai_service.dart
-
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class AIService {
-  // COLLEZ VOTRE CLÉ D'API OBTENUE À L'ÉTAPE 1 ICI
-  static const String _apiKey = 'Axxx';
+  // ⚠️ Hugging Face Read Token
+  static const String _apiKey = '*****';
+
+  static const String _endpoint =
+      'https://router.huggingface.co/v1/chat/completions';
+
+  static const String _model =
+      'dphn/Dolphin-Mistral-24B-Venice-Edition:featherless-ai';
 
   /// Génère une description de vente pour une voiture.
   Future<String> generateAdDescription({
@@ -12,23 +17,48 @@ class AIService {
     required String model,
     required int year,
   }) async {
-    // Crée une instance du modèle Gemini
-    final model = GenerativeModel(
-        model: 'gemma-3-2b', apiKey: _apiKey);
-
-    // Le "prompt" : l'instruction que vous donnez à l'IA.
     final prompt =
-        "Rédige une description de vente courte (environ 4 phrases), attractive et professionnelle pour une voiture. "
-        "Utilise un ton engageant et rassurant. N'utilise pas d'emojis. "
-        "Voici les détails de la voiture : Marque: $brand, Modèle: $model, Année: $year.";
+        "Rédige une description de vente courte (environ 4 phrases), "
+        "attractive et professionnelle pour une voiture. "
+        "Utilise un ton engageant et rassurant. "
+        "N'utilise pas d'emojis.\n\n"
+        "Détails :\n"
+        "- Marque : $brand\n"
+        "- Modèle : $model\n"
+        "- Année : $year";
 
     try {
-      // Envoie la requête à l'IA et attend la réponse
-      final response = await model.generateContent([Content.text(prompt)]);
-      return response.text ?? "Impossible de générer une description pour le moment.";
+      final response = await http.post(
+        Uri.parse(_endpoint),
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'model': _model,
+          'messages': [
+            {
+              'role': 'system',
+              'content':
+              'Tu es un assistant spécialisé dans la rédaction d’annonces automobiles.'
+            },
+            {'role': 'user', 'content': prompt},
+          ],
+          'temperature': 0.7,
+          'max_tokens': 200,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+            'HuggingFace error ${response.statusCode}: ${response.body}');
+      }
+
+      final data = jsonDecode(response.body);
+      return data['choices'][0]['message']['content'].trim();
     } catch (e) {
-      print("Erreur lors de l'appel à l'API Gemini: $e");
-      throw Exception("La génération de la description a échoué. Veuillez réessayer.");
+      print('Erreur API Hugging Face: $e');
+      return "Erreur de génération. Veuillez réessayer.";
     }
   }
 
@@ -40,11 +70,11 @@ class AIService {
 
   /// Donne des conseils pour des photos professionnelles.
   List<String> getPhotoTips() {
-    return [
+    return const [
       "Conseil 1 : Lavez la voiture avant de prendre les photos.",
-      "Conseil 2 : Prenez les photos à l'extérieur, avec une bonne lumière naturelle (matin ou fin d'après-midi).",
-      "Conseil 3 : Prenez une photo de chaque côté (avant, arrière, gauche, droite).",
-      "Conseil 4 : Prenez aussi des photos de l'intérieur (sièges, tableau de bord, compteur).",
+      "Conseil 2 : Prenez les photos à l'extérieur, avec une bonne lumière naturelle.",
+      "Conseil 3 : Photographiez chaque côté du véhicule.",
+      "Conseil 4 : Incluez l’intérieur (sièges, tableau de bord, compteur).",
     ];
   }
 }
