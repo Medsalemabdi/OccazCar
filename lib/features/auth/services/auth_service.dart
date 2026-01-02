@@ -1,10 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:occazcar/features/users/services/user_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final UserService _userService = UserService();
 
   // REGISTER
-  Future<void> register(String email, String password) async {
+  Future<void> register(
+      String email,
+      String password, {
+        required String role,
+      }) async {
     try {
       final cred = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -13,6 +19,9 @@ class AuthService {
 
       // Envoi email de vérification
       await cred.user?.sendEmailVerification();
+
+      // Création Firestore user
+      await _userService.createUser(role: role);
 
       // Déconnexion immédiate (sécurité)
       await _auth.signOut();
@@ -33,7 +42,9 @@ class AuthService {
       // Vérification email
       if (!cred.user!.emailVerified) {
         await _auth.signOut();
-        throw Exception('Veuillez vérifier votre email avant de vous connecter');
+        throw Exception(
+          'Veuillez vérifier votre email avant de vous connecter',
+        );
       }
 
     } on FirebaseAuthException catch (e) {

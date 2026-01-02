@@ -14,7 +14,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final AuthService _authService = AuthService();
-
+  String _selectedRole = 'buyer'; // valeur par défaut
   bool _isLoading = false;
 
   @override
@@ -84,6 +84,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ? 'Les mots de passe ne correspondent pas'
                     : null,
               ),
+              const SizedBox(height: 20),
+              const Text(
+                'Vous êtes ?',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+
+              RadioListTile<String>(
+                title: const Text('Acheteur'),
+                value: 'buyer',
+                groupValue: _selectedRole,
+                onChanged: (value) {
+                  setState(() => _selectedRole = value!);
+                },
+              ),
+
+              RadioListTile<String>(
+                title: const Text('Vendeur'),
+                value: 'seller',
+                groupValue: _selectedRole,
+                onChanged: (value) {
+                  setState(() => _selectedRole = value!);
+                },
+              ),
               const SizedBox(height: 30),
 
               ElevatedButton(
@@ -98,6 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     await _authService.register(
                       _emailController.text.trim(),
                       _passwordController.text.trim(),
+                      role: _selectedRole,
                     );
 
                     if (!mounted) return;
