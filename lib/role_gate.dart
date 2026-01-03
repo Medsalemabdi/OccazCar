@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:occazcar/features/buyer/ui/buyer_home_screen.dart';
+import 'package:occazcar/features/buyer/ui/buyer_home_screen.dart'; // buyer
 import 'package:occazcar/features/users/services/user_service.dart';
 
-// Écrans
+
 import 'package:occazcar/features/dashboard/dashboard_screen.dart'; // seller
-//import 'package:occazcar/features/buyer/ui/buyer_home_screen.dart';
+
 
 class RoleGate extends StatelessWidget {
   const RoleGate({super.key});
