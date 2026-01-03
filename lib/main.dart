@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:occazcar/features/offers/ui/screens/conversations_screen.dart';
 import 'firebase_options.dart';
 
 import 'package:occazcar/features/auth/ui/login_screen.dart';
@@ -48,6 +49,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
+        '/conversations': (_) => const ConversationsScreen(),
+
       },
     );
   }

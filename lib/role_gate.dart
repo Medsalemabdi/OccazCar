@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:occazcar/features/buyer/ui/buyer_home_screen.dart';
 import 'package:occazcar/features/users/services/user_service.dart';
 
 // Écrans
@@ -31,9 +32,9 @@ class RoleGate extends StatelessWidget {
           return const DashboardScreen(); // UI de ton collaborateur
         }
 
-        //if (user.role == 'buyer') {
-        //  return const BuyerHomeScreen();
-        //}
+        if (user.role == 'buyer') {
+          return const BuyerHomeScreen();
+        }
 
         return const Scaffold(
           body: Center(child: Text('Rôle inconnu')),

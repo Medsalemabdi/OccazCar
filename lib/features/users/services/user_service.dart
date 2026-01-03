@@ -34,4 +34,15 @@ class UserService {
 
     return AppUser.fromDoc(doc);
   }
+
+  Future<void> saveAlertPreferences(Map<String, dynamic> filters) async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .update({
+      'alertPreferences': filters,
+    });
+  }
+
 }
