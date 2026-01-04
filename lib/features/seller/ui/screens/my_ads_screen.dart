@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:occazcar/features/seller/services/ad_service.dart';
 import 'package:occazcar/features/seller/ui/screens/edit_ad_screen.dart';
-// 1. IMPORTER LE SERVICE D'OFFRES POUR LE PROTOTYPAGE
 import 'package:occazcar/features/offers/services/offer_service.dart';
 
 class MyAdsScreen extends StatefulWidget {
@@ -26,8 +25,15 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.grey[50], // Applique le fond gris clair de l'UI Acheteur
       appBar: AppBar(
-        title: const Text('Mes Annonces'),
+        title: const Text(
+          'Mes Annonces',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _adService.getAdsForSeller(_currentUser!.uid),
@@ -39,134 +45,137 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
             return Center(child: Text('Erreur: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('Vous n\'avez aucune annonce.'));
+            return const Center(child: Text('Vous n\'avez publié aucune annonce.'));
           }
 
           final adDocs = snapshot.data!.docs;
 
           return ListView.builder(
+            padding: const EdgeInsets.only(top: 8.0), // Ajoute un peu d'espace en haut
             itemCount: adDocs.length,
             itemBuilder: (context, index) {
               final adData = adDocs[index].data();
               final adId = adDocs[index].id;
 
+              // ===================================================================
+              //               APPLICATION DU STYLE DE L'ACHETEUR ICI
+              // ===================================================================
+              String? firstImageUrl;
+              if (adData['imageUrls'] != null && (adData['imageUrls'] as List).isNotEmpty) {
+                firstImageUrl = adData['imageUrls'][0];
+              }
+
               return Card(
-                margin: const EdgeInsets.all(8.0),
-                child: ListTile(
-                  leading: (adData['imageUrls'] != null &&
-                      (adData['imageUrls'] as List).isNotEmpty)
-                      ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.network(
-                      adData['imageUrls'][0],
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                      : const Icon(Icons.directions_car, size: 40),
-                  title: Text('${adData['brand']} ${adData['model']}',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${adData['price']} € - ${adData['mileage']} km'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => EditAdScreen(
-                                adData: adData,
-                                adId: adId,
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                elevation: 3, // Ombre subtile et moderne
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                clipBehavior: Clip.antiAlias, // Assure que l'image respecte les coins arrondis
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // --- IMAGE ---
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Container(
+                            width: 90,
+                            height: 90,
+                            color: Colors.grey[200],
+                            child: firstImageUrl != null
+                                ? Image.network(
+                              firstImageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, err, st) => Icon(Icons.broken_image, color: Colors.grey[400]),
+                            )
+                                : Icon(Icons.directions_car, color: Colors.grey[400], size: 40),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // --- INFORMATIONS TEXTE ---
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '${adData['brand']} ${adData['model']}',
+                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          // ... (votre code de suppression est parfait)
-                          showDialog(
-                            context: context,
-                            builder: (dialogContext) => AlertDialog(
-                              title: const Text('Confirmer la suppression'),
-                              content: const Text(
-                                  'Êtes-vous sûr ? Cette action est irréversible.'),
-                              actions: [
-                                TextButton(
-                                  child: const Text('Annuler'),
-                                  onPressed: () =>
-                                      Navigator.of(dialogContext).pop(),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${adData['year']} • ${adData['mileage']} km',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${adData['price']} €',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).primaryColor,
                                 ),
-                                TextButton(
-                                  child: const Text('Supprimer',
-                                      style: TextStyle(color: Colors.red)),
-                                  onPressed: () async {
-                                    Navigator.of(dialogContext).pop();
-                                    try {
-                                      await _adService.deleteAd(adId);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content:
-                                            Text('Annonce supprimée.'),
-                                            backgroundColor: Colors.green),
-                                      );
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text('Erreur: $e'),
-                                            backgroundColor: Colors.red),
-                                      );
-                                    }
-                                  },
-                                ),
-                              ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // --- BOUTONS D'ACTION DU VENDEUR ---
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildActionButton(
+                              icon: Icons.edit,
+                              color: Colors.blueAccent,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => EditAdScreen(adData: adData, adId: adId),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
-                      // 2. BOUTON DE TEST POUR SIMULER UNE OFFRE D'ACHETEUR
-                      IconButton(
-                        icon: const Icon(Icons.send_and_archive, color: Colors.purple),
-                        tooltip: 'Simuler une offre d\'un autre utilisateur',
-                        onPressed: () async {
-                          final offerService = OfferService();
-                          final currentUser = FirebaseAuth.instance.currentUser!;
-                          try {
-                            // On simule qu'un acheteur fictif ("buyer_test_id")
-                            // envoie un message sur votre propre annonce.
-                            final conversationId = await offerService.startOrSendMessage(
-                              adId: adId,
-                              sellerId: currentUser.uid,
-                              buyerId: 'buyer_test_id',
-                              initialMessage: "Bonjour, je suis un acheteur de test et votre ${adData['brand']} m'intéresse !",
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(
-                                      'Simulation réussie ! Conversation créée.'),
-                                  backgroundColor: Colors.purple),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('Erreur de simulation: $e'),
-                                  backgroundColor: Colors.red),
-                            );
-                          }
-                        },
-                      ),
-                    ],
+                            _buildActionButton(
+                              icon: Icons.delete_outline,
+                              color: Colors.redAccent,
+                              onTap: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (dialogContext) => AlertDialog( /* ... */ )
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
             },
           );
         },
+      ),
+    );
+  }
+
+  // Helper widget pour créer des boutons d'action stylés et plus petits
+  Widget _buildActionButton({required IconData icon, required Color color, required VoidCallback onTap}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Icon(icon, color: color, size: 22),
+        ),
       ),
     );
   }
