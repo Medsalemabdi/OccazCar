@@ -202,8 +202,9 @@ cd android
 gradlew singingReport
 ````
 Copy sha256 and sha1 fingerprints and add them to app fingerprints in firebase
-````
 5. Run the App
+
+````
 ```bash
 flutter run
 ````
