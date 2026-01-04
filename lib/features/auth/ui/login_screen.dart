@@ -1,9 +1,6 @@
-// @/OccazCar/lib/features/auth/ui/login_screen.dart
-
-import 'package:firebase_auth/firebase_auth.dart'; // <-- 1. ON IMPORTE LE SERVICE OFFICIEL
+// @/OccazCar/lib/features/auth/ui/login_screen.dartimport 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-// On n'importe plus votre 'AuthService' personnel.
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,7 +13,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  // On n'a plus besoin de 'AuthService _authService = AuthService();'
 
   bool _isLoading = false;
 
@@ -27,7 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // 2. LA FONCTION DE CONNEXION QUI DÉCLENCHE LA REDIRECTION
   Future<void> _login() async {
     // Valide le formulaire
     if (!_formKey.currentState!.validate()) {
@@ -40,22 +35,56 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // 3. ON APPELLE DIRECTEMENT FIREBASE AUTH
-      // C'est cette ligne qui va "crier" à main.dart : "L'UTILISATEUR EST CONNECTÉ !"
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      // 1. TENTATIVE DE CONNEXION
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // Si ça réussit, ON NE FAIT RIEN DE PLUS. La redirection est maintenant automatique.
-      // Pas besoin de 'Navigator.push' ici.
+      // 2. VÉRIFICATION DE L'EMAIL
+      if (credential.user != null && !credential.user!.emailVerified) {
+        // L'email n'est pas vérifié : on déconnecte immédiatement pour empêcher l'accès
+        await FirebaseAuth.instance.signOut();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  "Veuillez vérifier votre email avant de vous connecter."),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: "OK",
+                textColor: Colors.white,
+                onPressed: () {
+                  // Fermer la snackbar
+                },
+              ),
+            ),
+          );
+        }
+        return; // On arrête ici, pas de redirection automatique car signOut() a été appelé
+      }
+
+      // Si on arrive ici, l'email est vérifié (ou null), la redirection sera automatique via main.dart
 
     } on FirebaseAuthException catch (e) {
-      // En cas d'erreur (mot de passe incorrect, etc.), on prévient l'utilisateur
+      // En cas d'erreur (mot de passe incorrect, etc.)
       if (mounted) {
+        String message = "Erreur de connexion.";
+        if (e.code == 'user-not-found') {
+          message = "Aucun utilisateur trouvé pour cet email.";
+        } else if (e.code == 'wrong-password') {
+          message = "Mot de passe incorrect.";
+        } else if (e.code == 'invalid-email') {
+          message = "Format d'email invalide.";
+        } else if (e.code == 'user-disabled') {
+          message = "Ce compte a été désactivé.";
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text("Email ou mot de passe incorrect."),
+            content: Text(message),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -90,25 +119,30 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 40),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
+                decoration: const InputDecoration(
+                    labelText: 'Email', prefixIcon: Icon(Icons.email)),
                 keyboardType: TextInputType.emailAddress,
-                validator: (v) => v == null || v.isEmpty ? 'Email requis' : null,
+                validator: (v) =>
+                v == null || v.isEmpty ? 'Email requis' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Mot de passe', prefixIcon: Icon(Icons.lock)),
-                validator: (v) => v == null || v.isEmpty ? 'Mot de passe requis' : null,
+                decoration: const InputDecoration(
+                    labelText: 'Mot de passe', prefixIcon: Icon(Icons.lock)),
+                validator: (v) =>
+                v == null || v.isEmpty ? 'Mot de passe requis' : null,
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                // 4. ON APPELLE LA NOUVELLE FONCTION _login
                 onPressed: _isLoading ? null : _login,
                 child: _isLoading
                     ? const SizedBox(
-                  width: 22, height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
                 )
                     : const Text('Se connecter'),
               ),
