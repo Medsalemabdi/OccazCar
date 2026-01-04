@@ -72,7 +72,75 @@ This project requires API keys and configuration files to function correctly.
 2. Place it in:
    - `android/app/google-services.json`
 
-### b) API Keys (Hugging Face)
+### b) Firestore Security Rules
+
+Add the following rules in **Firebase Console → Firestore Database → Rules**:
+
+```js
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- ADS ---
+    match /ads/{adId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth.uid == resource.data.sellerId;
+    }
+
+    // --- USERS ---
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // --- CONVERSATIONS ---
+    match /conversations/{conversationId} {
+      // 1) CREATE
+      allow create: if request.auth != null && (
+        request.resource.data.buyerId == request.auth.uid ||
+        request.resource.data.sellerId == request.auth.uid
+      );
+
+      // 2) READ
+      allow read: if request.auth != null && (
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        resource.data.participants.hasAny([request.auth.uid])
+      );
+
+      // 3) UPDATE
+      allow update: if request.auth != null && (
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        resource.data.participants.hasAny([request.auth.uid])
+      );
+
+      // MESSAGES (subcollection)
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null && (
+          get(/databases/$(database)/documents/conversations/$(conversationId)).data.buyerId == request.auth.uid ||
+          get(/databases/$(database)/documents/conversations/$(conversationId)).data.sellerId == request.auth.uid
+        );
+      }
+    }
+
+    // --- ALERTS ---
+    match /alerts/{alertId} {
+      // Allow creation only if the user is logged in AND the alert belongs to them
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+      // Allow reading and deleting only their own alerts
+      allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+  }
+}
+
+
+
+### c) API Keys (Hugging Face)
 b. Hugging Face API Key
 The Hugging Face API key is required for the AI-powered ad description generator.
 
@@ -82,7 +150,7 @@ The Hugging Face API key is required for the AI-powered ad description generator
 
 3.Replace the placeholder ********************** with your actual Hugging Face Read Token.
 
-### c) Cloudinary Credentials
+### d) Cloudinary Credentials
 The Cloudinary Cloud Name and Upload Preset are managed directly in the service file.
 
 1. Open:
