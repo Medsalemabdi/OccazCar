@@ -92,7 +92,7 @@ final cloudinary = CloudinaryPublic(
   cache: false,
 );
 ````
-###4. Run the App
+4. Run the App
 ```bash
 flutter run
 ````
