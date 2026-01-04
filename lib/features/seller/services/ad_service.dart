@@ -3,7 +3,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloudinary_public/cloudinary_public.dart'; // <--- INDISPENSABLE
+import 'package:cloudinary_public/cloudinary_public.dart';
 
 class AdService {
   final CollectionReference<Map<String, dynamic>> _adsCollection =
@@ -11,8 +11,7 @@ class AdService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Configuration Cloudinary
-  // Note : Assurez-vous que 'dmxcuddqs' et 'occazcar_preset' sont corrects
-  final cloudinary = CloudinaryPublic('dmxcuddqs', 'occazcar_preset', cache: false);
+  final cloudinary = CloudinaryPublic('***', '***', cache: false);
 
   /// Publier une nouvelle annonce
   Future<void> publishAd(Map<String, dynamic> adData) async {

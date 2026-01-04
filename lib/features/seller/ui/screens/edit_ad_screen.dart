@@ -24,7 +24,6 @@ class _EditAdScreenState extends State<EditAdScreen> {
   bool _isLoading = false;
   String _loadingMessage = 'Sauvegarde des modifications...';
 
-  // C'EST CETTE FONCTION QUI FAIT TOUT LE TRAVAIL
   Future<void> _handleUpdateSubmit(
       Map<String, dynamic> formData, // Données texte
       List<File> newImages,          // Nouveaux fichiers à uploader
@@ -102,7 +101,7 @@ class _EditAdScreenState extends State<EditAdScreen> {
       )
           : EditAdFormWidget(
         initialData: widget.adData,
-        onSubmit: _handleUpdateSubmit, // On passe notre super fonction ici
+        onSubmit: _handleUpdateSubmit,
       ),
     );
   }
