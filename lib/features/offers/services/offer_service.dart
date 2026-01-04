@@ -10,32 +10,66 @@ class OfferService {
   Future<String> startOrSendMessage({
     required String adId,
     required String sellerId,
-    required String buyerId, // On précise l'ID de l'acheteur
+    required String buyerId,
     required String initialMessage,
+    // On garde l'image de l'annonce pour le petit lien, mais on enlève adTitle si vous voulez
+    String? adImage,
+    // Plus besoin de adTitle ici, on va chercher les noms
   }) async {
-    // ID unique pour la conversation, toujours le même pour une paire annonce/acheteur
-    final conversationId = '${adId}_${buyerId}';
-    final conversationRef = _firestore.collection('conversations').doc(conversationId);
-    final messageRef = conversationRef.collection('messages');
+    final conversationsRef = FirebaseFirestore.instance.collection('conversations');
+    final usersRef = FirebaseFirestore.instance.collection('users');
 
-    // Crée ou met à jour la conversation avec le dernier message
-    await conversationRef.set({
-      'adId': adId,
-      'sellerId': sellerId,
-      'buyerId': buyerId,
-      'participants': [sellerId, buyerId], // Pour les règles de sécurité
-      'lastMessage': initialMessage,
-      'lastMessageTimestamp': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    // 1. Vérifier si conversation existe
+    final querySnapshot = await conversationsRef
+        .where('adId', isEqualTo: adId)
+        .where('buyerId', isEqualTo: buyerId)
+        .where('sellerId', isEqualTo: sellerId)
+        .limit(1)
+        .get();
 
-    // Ajoute le premier message à la sous-collection
-    await messageRef.add({
-      'senderId': buyerId,
-      'text': initialMessage,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+    if (querySnapshot.docs.isNotEmpty) {
+      return querySnapshot.docs.first.id;
+    } else {
+      // 2. RÉCUPÉRER LES NOMS
+      // Nom de l'acheteur (Current User)
+      String buyerName = "Acheteur inconnu";
+      final buyerDoc = await usersRef.doc(buyerId).get();
+      if (buyerDoc.exists) {
+        final d = buyerDoc.data()!;
+        buyerName = "${d['firstName']} ${d['lastName']}";
+      }
 
-    return conversationId;
+      // Nom du vendeur
+      String sellerName = "Vendeur inconnu";
+      final sellerDoc = await usersRef.doc(sellerId).get();
+      if (sellerDoc.exists) {
+        final d = sellerDoc.data()!;
+        sellerName = "${d['firstName']} ${d['lastName']}";
+      }
+
+      // 3. CRÉER LA CONVERSATION AVEC LES NOMS
+      final docRef = await conversationsRef.add({
+        'adId': adId,
+        'sellerId': sellerId,
+        'buyerId': buyerId,
+        'lastMessage': initialMessage,
+        'lastMessageTimestamp': FieldValue.serverTimestamp(),
+        'unreadCount': 1,
+        'adImage': adImage ?? '',
+
+        // --- NOUVEAU : ON STOCKE LES NOMS ICI ---
+        'buyerName': buyerName,
+        'sellerName': sellerName,
+      });
+
+      await docRef.collection('messages').add({
+        'senderId': buyerId,
+        'text': initialMessage,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      return docRef.id;
+    }
   }
 
   /// Récupère toutes les conversations d'un utilisateur (acheteur ou vendeur).

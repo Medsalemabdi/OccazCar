@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:occazcar/features/seller/ui/screens/create_ad_screen.dart';
 import 'package:occazcar/features/seller/ui/screens/my_ads_screen.dart';
 import 'package:occazcar/features/offers/ui/screens/conversations_screen.dart';
+import 'package:occazcar/features/users/ui/user_profile_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -29,7 +30,17 @@ class DashboardScreen extends StatelessWidget {
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
             },
-          )
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.black87),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: ListView( // Utiliser ListView pour une meilleure flexibilité

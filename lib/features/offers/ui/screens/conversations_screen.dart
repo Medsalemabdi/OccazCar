@@ -1,7 +1,7 @@
-// lib/features/offers/ui/screens/conversations_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Pensez à ajouter intl: ^0.18.0 dans pubspec.yaml si besoin
+import 'package:intl/intl.dart'; // Assurez-vous d'avoir intl dans pubspec.yaml
 import 'package:occazcar/features/offers/services/offer_service.dart';
 import 'package:occazcar/features/offers/ui/screens/chat_screen.dart';
 
@@ -11,6 +11,8 @@ class ConversationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final OfferService offerService = OfferService();
+    // On récupère l'ID de l'utilisateur connecté pour savoir qui est "l'autre"
+    final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -47,129 +49,148 @@ class ConversationsScreen extends StatelessWidget {
               final convData = conversations[index].data() as Map<String, dynamic>;
               final conversationId = conversations[index].id;
 
-              // Récupération des données sécurisée
-              final String title = convData['adTitle'] ?? 'Annonce inconnue';
+              // --- 1. DÉTERMINER QUI EST L'AUTRE ---
+              final bool isMeBuyer = convData['buyerId'] == currentUserId;
+              final String otherUserId = isMeBuyer ? convData['sellerId'] : convData['buyerId'];
+
+              // Nom potentiellement stocké (peut être null ou "Vendeur"/"Acheteur" pour les vieilles conv)
+              String storedName = isMeBuyer
+                  ? (convData['sellerName'] ?? 'Vendeur')
+                  : (convData['buyerName'] ?? 'Acheteur');
+
+              // Autres données
               final String lastMsg = convData['lastMessage'] ?? '...';
-              final String? imageUrl = convData['adImage'];
               final Timestamp? time = convData['lastMessageTimestamp'];
 
-              // Affichage du prix si dispo
+              // Prix (optionnel, pour rappel contextuel)
               final String priceTag = convData['adPrice'] != null
                   ? '${convData['adPrice']} €'
                   : '';
 
-              return InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          ChatScreen(conversationId: conversationId),
-                    ),
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    children: [
-                      // --- 1. AVATAR / IMAGE VOITURE ---
-                      Stack(
+              // --- 2. FUTURE BUILDER POUR RECUPERER LE NOM MANQUANT ---
+              // Si le nom est générique, on va chercher le vrai nom dans la collection 'users'
+              return FutureBuilder<DocumentSnapshot>(
+                future: (storedName == 'Vendeur' || storedName == 'Acheteur')
+                    ? FirebaseFirestore.instance.collection('users').doc(otherUserId).get()
+                    : null, // Pas besoin de requête si on a déjà un vrai nom
+                builder: (context, userSnapshot) {
+
+                  String displayName = storedName;
+
+                  // Si on a récupéré des données fraîches de l'utilisateur
+                  if (userSnapshot.hasData && userSnapshot.data != null && userSnapshot.data!.exists) {
+                    final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                    if (userData['firstName'] != null) {
+                      displayName = "${userData['firstName']} ${userData['lastName']}";
+                    }
+                  }
+
+                  return InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ChatScreen(conversationId: conversationId),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
                         children: [
-                          Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(28), // Rond
-                              border: Border.all(color: Colors.grey.shade300),
-                              image: imageUrl != null && imageUrl.isNotEmpty
-                                  ? DecorationImage(
-                                image: NetworkImage(imageUrl),
-                                fit: BoxFit.cover,
-                              )
-                                  : null,
+                          // --- 3. AVATAR (INITIALES) ---
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                            child: Text(
+                              displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueAccent,
+                              ),
                             ),
-                            child: (imageUrl == null || imageUrl.isEmpty)
-                                ? Icon(Icons.directions_car, color: Colors.grey[400])
-                                : null,
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          // --- 4. CONTENU TEXTE ---
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Ligne du haut : Nom Interlocuteur + Date
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        displayName, // <--- NOM CORRIGÉ
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    if (time != null)
+                                      Text(
+                                        _formatTimestamp(time),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[500],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+
+                                // Ligne du bas : Dernier message + Badge Prix
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        lastMsg,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                    ),
+                                    // Petit badge prix pour rappeler de quelle voiture on parle
+                                    if (priceTag.isNotEmpty)
+                                      Container(
+                                        margin: const EdgeInsets.only(left: 8),
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                            color: Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(color: Colors.grey.shade300)
+                                        ),
+                                        child: Text(
+                                          priceTag,
+                                          style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey[700]
+                                          ),
+                                        ),
+                                      )
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-
-                      const SizedBox(width: 16),
-
-                      // --- 2. CONTENU TEXTE ---
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Ligne du haut : Titre + Date
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                                if (time != null)
-                                  Text(
-                                    _formatTimestamp(time),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-
-                            // Ligne du bas : Dernier message + Prix (optionnel)
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    lastMsg,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
-                                      height: 1.2,
-                                    ),
-                                  ),
-                                ),
-                                if (priceTag.isNotEmpty)
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                        color: Colors.blue[50],
-                                        borderRadius: BorderRadius.circular(4)
-                                    ),
-                                    child: Text(
-                                      priceTag,
-                                      style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue[800]
-                                      ),
-                                    ),
-                                  )
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
           );
@@ -199,7 +220,7 @@ class ConversationsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Contactez un vendeur pour démarrer\nune discussion.',
+            'Vos échanges avec les vendeurs\napparaîtront ici.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),

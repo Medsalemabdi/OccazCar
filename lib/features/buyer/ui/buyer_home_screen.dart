@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:occazcar/features/buyer/ui/ad_detail_screen.dart';
 import 'package:occazcar/features/buyer/ui/widgets/ad_card.dart';
 import 'package:occazcar/features/buyer/ui/widgets/filter_bottom_sheet.dart';
+import 'package:occazcar/features/users/ui/user_profile_screen.dart';
 import 'package:occazcar/shared/widgets/app_logout_button.dart';
 
 class BuyerHomeScreen extends StatefulWidget {
@@ -114,18 +115,35 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
             letterSpacing: -0.5,
           ),
         ),
+        // Dans buyer_home_screen.dart -> AppBar -> actions
+
         actions: [
+          // Bouton Messagerie
           IconButton(
             icon: const Icon(Icons.chat_bubble_outline, color: Colors.black87),
             onPressed: () {
               Navigator.pushNamed(context, '/conversations');
             },
           ),
+
+          // --- AJOUT : Bouton Profil ---
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.black87),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+              );
+            },
+          ),
+
+          // Bouton Logout
           const Padding(
             padding: EdgeInsets.only(right: 8.0),
-            child: AppLogoutButton(), // Assurez-vous que ce bouton a une icône noire
+            child: AppLogoutButton(),
           ),
         ],
+
       ),
       body: Column(
         children: [
