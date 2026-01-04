@@ -19,7 +19,7 @@ class DashboardScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Mon Espace Vendeur',
+          'OccazCar',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
