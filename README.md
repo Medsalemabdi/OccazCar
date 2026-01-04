@@ -85,6 +85,7 @@ flutterfire configure
 flutter pub add firebase_core
 flutter pub get
 
+
 This project requires API keys and configuration files to function correctly.
 
 ### a) Firebase (Android)
