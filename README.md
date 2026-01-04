@@ -50,4 +50,18 @@ The app is built on a **Client-Serverless** architecture implementing the **MVCS
 * **Service:** Business logic layer bridging UI and APIs (e.g., `AdService`, `AIService`).
 
 ---
+## 🚀 Installation & Setup
+
+To run this project locally:
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/your-username/OccazCar.git](https://github.com/your-username/OccazCar.git)
+cd OccazCar
+````
+### 2. Install Dependencies
+```bash
+flutter pub get
+````
+
 
