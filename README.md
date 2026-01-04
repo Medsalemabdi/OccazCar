@@ -63,5 +63,36 @@ cd OccazCar
 ```bash
 flutter pub get
 ````
+## 3. Configuration (Crucial Step)
 
+This project requires API keys and configuration files to function correctly.
 
+### a) Firebase (Android)
+1. Download your `google-services.json` file from your Firebase project console.
+2. Place it in:
+   - `android/app/google-services.json`
+
+### b) API Keys (Hugging Face)
+This project uses a `.env` file to securely manage API keys.
+
+1. Create a file named `.env` at the root of the project.
+2. Add your Hugging Face key
+
+### c) Cloudinary Credentials
+The Cloudinary Cloud Name and Upload Preset are managed directly in the service file.
+
+1. Open:
+   - `lib/features/seller/services/ad_service.dart`
+2. Find the `CloudinaryPublic` instance and replace the placeholders:
+
+```dart
+final cloudinary = CloudinaryPublic(
+  'YOUR_CLOUDINARY_CLOUD_NAME',
+  'YOUR_CLOUDINARY_UPLOAD_PRESET', // Must be an "Unsigned" preset
+  cache: false,
+);
+````
+###4. Run the App
+```bash
+flutter run
+````
