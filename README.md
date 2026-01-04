@@ -75,8 +75,11 @@ This project requires API keys and configuration files to function correctly.
 ### b) API Keys (Hugging Face)
 b. Hugging Face API Key
 The Hugging Face API key is required for the AI-powered ad description generator.
+
 1.Open the file: lib/features/ia/ai_service.dart
+
 2.Find the _apiKey variable inside the AIService class.
+
 3.Replace the placeholder ********************** with your actual Hugging Face Read Token.
 
 ### c) Cloudinary Credentials
