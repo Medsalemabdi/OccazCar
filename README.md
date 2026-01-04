@@ -51,5 +51,3 @@ The app is built on a **Client-Serverless** architecture implementing the **MVCS
 
 ---
 
-
-}
