@@ -18,7 +18,7 @@ class AlertService {
     if (user == null) return;
 
     final alert = SearchAlert(
-      id: '', // Sera généré par Firestore
+      id: '',
       userId: user.uid,
       brand: brand,
       minPrice: minPrice,

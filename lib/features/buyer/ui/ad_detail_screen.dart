@@ -52,7 +52,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        // Optionnel : Ajouter un menu d'édition en haut à droite pour le vendeur
+
         actions: isSeller
             ? [
           Container(
@@ -64,7 +64,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
             child: IconButton(
               icon: const Icon(Icons.edit, color: Colors.blueAccent),
               onPressed: () {
-                // TODO: Naviguer vers l'écran de modification
+
                 ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Fonction modifier à venir")));
               },
@@ -279,7 +279,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
           child: SizedBox(
             width: double.infinity,
             height: 56,
-            // --- C'EST ICI QUE TOUT SE JOUE ---
+
             child: isSeller
                 ? _buildSellerButtons(context) // Version Vendeur
                 : _buildBuyerButton(context, offerService, user), // Version Acheteur

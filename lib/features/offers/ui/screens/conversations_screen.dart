@@ -72,7 +72,7 @@ class ConversationsScreen extends StatelessWidget {
               return FutureBuilder<DocumentSnapshot>(
                 future: (storedName == 'Vendeur' || storedName == 'Acheteur')
                     ? FirebaseFirestore.instance.collection('users').doc(otherUserId).get()
-                    : null, // Pas besoin de requête si on a déjà un vrai nom
+                    : null,
                 builder: (context, userSnapshot) {
 
                   String displayName = storedName;
@@ -125,7 +125,7 @@ class ConversationsScreen extends StatelessWidget {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        displayName, // <--- NOM CORRIGÉ
+                                        displayName,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
@@ -147,7 +147,7 @@ class ConversationsScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
 
-                                // Ligne du bas : Dernier message + Badge Prix
+
                                 Row(
                                   children: [
                                     Expanded(
@@ -162,7 +162,7 @@ class ConversationsScreen extends StatelessWidget {
                                         ),
                                       ),
                                     ),
-                                    // Petit badge prix pour rappeler de quelle voiture on parle
+
                                     if (priceTag.isNotEmpty)
                                       Container(
                                         margin: const EdgeInsets.only(left: 8),
@@ -199,7 +199,7 @@ class ConversationsScreen extends StatelessWidget {
     );
   }
 
-  // --- Widget Etat Vide ---
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -236,14 +236,14 @@ class ConversationsScreen extends StatelessWidget {
     final difference = now.difference(date);
 
     if (difference.inDays == 0) {
-      // Aujourd'hui -> Heure (ex: 14:30)
+
       return "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
     } else if (difference.inDays < 7) {
-      // Cette semaine -> Jour (ex: Mar)
+
       const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
       return days[date.weekday - 1];
     } else {
-      // Plus vieux -> Date courte (ex: 12/04)
+
       return "${date.day}/${date.month}";
     }
   }

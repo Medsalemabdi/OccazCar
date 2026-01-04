@@ -13,9 +13,9 @@ class FilterBottomSheet extends StatefulWidget {
 }
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
-  // Valeurs par défaut
+
   static const double _defaultMinPrice = 0;
-  static const double _defaultMaxPrice = 500000; // 500k max c'est plus réaliste que 100M
+  static const double _defaultMaxPrice = 500000;
   static const double _defaultMinYear = 1990;
 
   String? _selectedBrand;
@@ -71,7 +71,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: SingleChildScrollView( // Ajout du scroll au cas où l'écran est petit
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,7 +128,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   values: _priceRange,
                   min: _defaultMinPrice,
                   max: _defaultMaxPrice,
-                  divisions: 100, // Plus fluide
+                  divisions: 100,
                   labels: RangeLabels(
                     '${_priceRange.start.round()} €',
                     '${_priceRange.end.round()} €',
@@ -172,7 +172,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          // ACTION REINITIALISER CORRIGÉE
+
                           // On renvoie un Map vide signifiant "aucun filtre"
                           Navigator.pop(context, <String, dynamic>{});
                         },

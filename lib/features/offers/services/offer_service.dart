@@ -53,9 +53,9 @@ class OfferService {
         'sellerId': sellerId,
         'buyerId': buyerId,
 
-        // --- C'EST LA LIGNE QUI MANQUAIT ---
+
         'participants': [buyerId, sellerId],
-        // -----------------------------------
+
 
         'lastMessage': initialMessage,
         'lastMessageTimestamp': FieldValue.serverTimestamp(),

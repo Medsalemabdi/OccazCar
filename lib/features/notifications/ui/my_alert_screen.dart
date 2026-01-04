@@ -84,9 +84,6 @@ class _AlertResultTile extends StatelessWidget {
       query = query.where('price', isLessThanOrEqualTo: alert.maxPrice);
     }
 
-    // On trie par date pour voir les nouvelles
-    // Note: Si vous filtrez par prix, vous devez trier par prix d'abord ou avoir un index.
-    // Pour simplifier ici, on ne met pas de orderBy complexe pour éviter les erreurs "Index Required"
 
     return query;
   }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:occazcar/features/buyer/ui/buyer_home_screen.dart'; // buyer
 import 'package:occazcar/features/users/services/user_service.dart';
-
-
 import 'package:occazcar/features/dashboard/dashboard_screen.dart'; // seller
 
 
@@ -29,7 +27,7 @@ class RoleGate extends StatelessWidget {
         final user = snapshot.data!;
 
         if (user.role == 'seller') {
-          return const DashboardScreen(); // UI de ton collaborateur
+          return const DashboardScreen();
         }
 
         if (user.role == 'buyer') {

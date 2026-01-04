@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:occazcar/features/buyer/ui/ad_detail_screen.dart'; // Assurez-vous que l'import est bon
+import 'package:occazcar/features/buyer/ui/ad_detail_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;
@@ -39,7 +39,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.clear();
   }
 
-  // --- NOUVEAU : Fonction pour naviguer vers l'annonce ---
+  // ---  Fonction pour naviguer vers l'annonce ---
   Future<void> _navigateToAd(String adId) async {
     try {
       // On montre un chargement
@@ -136,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // --- MODIFICATION ICI : Style "Lien / Pièce jointe" ---
+
   Widget _buildAttachmentLink() {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
@@ -175,7 +175,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 const SizedBox(width: 12),
 
-                // Texte "Concerne : ..."
+
                 Expanded(
                   child: Row(
                     children: [
@@ -189,7 +189,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           style: TextStyle(
                             color: Colors.blue[900],
                             fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline, // Souligné comme un lien
+                            decoration: TextDecoration.underline,
                             fontSize: 13,
                           ),
                           maxLines: 1,
@@ -200,7 +200,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
 
-                // Petite flèche pour dire "cliquez ici"
+
                 Icon(Icons.open_in_new, size: 16, color: Colors.blue[700]),
               ],
             ),
@@ -210,7 +210,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // ... (Le reste des widgets _buildMessageBubble et _buildInputArea reste identique) ...
 
   Widget _buildMessageBubble(String text, bool isMe) {
     return Align(

@@ -12,7 +12,6 @@ class AdCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CORRECTION ICI : On utilise 'imageUrls' comme dans AdDetailScreen
     String? firstImageUrl;
     if (ad['imageUrls'] != null && (ad['imageUrls'] as List).isNotEmpty) {
       firstImageUrl = ad['imageUrls'][0];
