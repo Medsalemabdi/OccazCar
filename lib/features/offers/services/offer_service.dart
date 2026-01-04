@@ -12,9 +12,7 @@ class OfferService {
     required String sellerId,
     required String buyerId,
     required String initialMessage,
-    // On garde l'image de l'annonce pour le petit lien, mais on enlève adTitle si vous voulez
     String? adImage,
-    // Plus besoin de adTitle ici, on va chercher les noms
   }) async {
     final conversationsRef = FirebaseFirestore.instance.collection('conversations');
     final usersRef = FirebaseFirestore.instance.collection('users');
@@ -31,33 +29,38 @@ class OfferService {
       return querySnapshot.docs.first.id;
     } else {
       // 2. RÉCUPÉRER LES NOMS
-      // Nom de l'acheteur (Current User)
       String buyerName = "Acheteur inconnu";
       final buyerDoc = await usersRef.doc(buyerId).get();
-      if (buyerDoc.exists) {
+      if (buyerDoc.exists && buyerDoc.data() != null) {
         final d = buyerDoc.data()!;
-        buyerName = "${d['firstName']} ${d['lastName']}";
+        if (d['firstName'] != null) {
+          buyerName = "${d['firstName']} ${d['lastName']}";
+        }
       }
 
-      // Nom du vendeur
       String sellerName = "Vendeur inconnu";
       final sellerDoc = await usersRef.doc(sellerId).get();
-      if (sellerDoc.exists) {
+      if (sellerDoc.exists && sellerDoc.data() != null) {
         final d = sellerDoc.data()!;
-        sellerName = "${d['firstName']} ${d['lastName']}";
+        if (d['firstName'] != null) {
+          sellerName = "${d['firstName']} ${d['lastName']}";
+        }
       }
 
-      // 3. CRÉER LA CONVERSATION AVEC LES NOMS
+      // 3. CRÉER LA CONVERSATION AVEC LES NOMS ET PARTICIPANTS
       final docRef = await conversationsRef.add({
         'adId': adId,
         'sellerId': sellerId,
         'buyerId': buyerId,
+
+        // --- C'EST LA LIGNE QUI MANQUAIT ---
+        'participants': [buyerId, sellerId],
+        // -----------------------------------
+
         'lastMessage': initialMessage,
         'lastMessageTimestamp': FieldValue.serverTimestamp(),
         'unreadCount': 1,
         'adImage': adImage ?? '',
-
-        // --- NOUVEAU : ON STOCKE LES NOMS ICI ---
         'buyerName': buyerName,
         'sellerName': sellerName,
       });
@@ -74,7 +77,9 @@ class OfferService {
 
   /// Récupère toutes les conversations d'un utilisateur (acheteur ou vendeur).
   Stream<QuerySnapshot> getUserConversations() {
-    final currentUser = _auth.currentUser!;
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return const Stream.empty();
+
     return _firestore
         .collection('conversations')
         .where('participants', arrayContains: currentUser.uid)

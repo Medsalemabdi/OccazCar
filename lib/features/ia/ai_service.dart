@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class AIService {
   // ⚠️ Hugging Face Read Token
-  static const String _apiKey = 'xxx';
+  static const String _apiKey = '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';
 
   static const String _endpoint =
       'https://router.huggingface.co/v1/chat/completions';
