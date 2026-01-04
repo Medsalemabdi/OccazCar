@@ -51,7 +51,6 @@ class _EditAdFormWidgetState extends State<EditAdFormWidget> {
     _formData = Map<String, dynamic>.from(widget.initialData);
 
     // Initialisation des contrôleurs
-    // Note: _brandController supprimé car remplacé par Dropdown
     _modelController = TextEditingController(text: _formData['model']);
     _yearController = TextEditingController(text: _formData['year']?.toString());
     _mileageController = TextEditingController(text: _formData['mileage']?.toString());
