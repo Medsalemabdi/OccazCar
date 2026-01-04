@@ -4,11 +4,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:occazcar/features/ia/ai_service.dart'; // <-- 1. ON IMPORTE LE NOUVEAU SERVICE IA
+import 'package:occazcar/features/ia/ai_service.dart';
 
 class AdFormWidget extends StatefulWidget {
   final Function(Map<String, dynamic> data, List<File> images) onSubmit;
-  const AdFormWidget({Key? key, required this.onSubmit}) : super(key: key);
+  // Ajout d'un paramètre optionnel pour pré-remplir (cas de l'édition)
+  final Map<String, dynamic>? initialData;
+
+  const AdFormWidget({
+    Key? key,
+    required this.onSubmit,
+    this.initialData,
+  }) : super(key: key);
 
   @override
   State<AdFormWidget> createState() => _AdFormWidgetState();
@@ -16,17 +23,41 @@ class AdFormWidget extends StatefulWidget {
 
 class _AdFormWidgetState extends State<AdFormWidget> {
   final _formKey = GlobalKey<FormState>();
-  final Map<String, dynamic> _formData = {
-    'brand': '', 'model': '', 'year': null, 'mileage': null,
-    'price': null, 'description': '', 'damage_report': '',
-  };
-  final _descriptionController = TextEditingController();
+
+  // --- LISTE DES MARQUES ---
+  final List<String> _knownBrands = [
+    'Peugeot', 'Renault', 'Citroën', 'Volkswagen', 'Dacia',
+    'Toyota', 'Ford', 'BMW', 'Mercedes', 'Audi',
+    'Fiat', 'Hyundai', 'Kia', 'Nissan', 'Opel',
+    'Seat', 'Skoda', 'Suzuki', 'Mini', 'Volvo',
+    'Land Rover', 'Jeep', 'Tesla', 'Autre'
+  ];
+
+  late Map<String, dynamic> _formData;
+  late TextEditingController _descriptionController;
   final List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
 
-  // 2. ON CRÉE UNE INSTANCE DE NOTRE SERVICE IA
   final AIService _aiService = AIService();
-  bool _isGenerating = false; // Pour l'indicateur de chargement du bouton IA
+  bool _isGenerating = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialisation des données (soit vides, soit celles de l'annonce à modifier)
+    _formData = {
+      'brand': widget.initialData?['brand'], // Sera null au départ si création
+      'model': widget.initialData?['model'] ?? '',
+      'year': widget.initialData?['year'],
+      'mileage': widget.initialData?['mileage'],
+      'price': widget.initialData?['price'],
+      'description': widget.initialData?['description'] ?? '',
+      'damage_report': widget.initialData?['damage_report'] ?? '',
+    };
+
+    _descriptionController = TextEditingController(text: _formData['description']);
+  }
 
   @override
   void dispose() {
@@ -34,37 +65,37 @@ class _AdFormWidgetState extends State<AdFormWidget> {
     super.dispose();
   }
 
-  // 3. LA FONCTION QUI APPELLE MAINTENANT LA VRAIE IA
   Future<void> _generateAIDescription() async {
-    _formKey.currentState?.save(); // Sauvegarde les données pour avoir la marque, modèle, etc.
-    final brand = _formData['brand'] ?? '';
+    _formKey.currentState?.save();
+    final brand = _formData['brand']; // Peut être null
     final model = _formData['model'] ?? '';
     final year = _formData['year'];
 
-    if (brand.isEmpty || model.isEmpty || year == null) {
+    if (brand == null || (brand as String).isEmpty || model.isEmpty || year == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Veuillez d\'abord remplir la marque, le modèle et l\'année.'),
           backgroundColor: Colors.orange));
       return;
     }
 
-    setState(() => _isGenerating = true); // Démarre le chargement
+    setState(() => _isGenerating = true);
 
     try {
-      // APPEL RÉEL À L'API GEMINI VIA NOTRE SERVICE
       final generatedText = await _aiService.generateAdDescription(
         brand: brand,
         model: model,
         year: year as int,
       );
-      // Met à jour le champ de texte avec la réponse de l'IA
-      setState(() => _descriptionController.text = generatedText);
+      setState(() {
+        _descriptionController.text = generatedText;
+        _formData['description'] = generatedText; // Mise à jour de la map aussi
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Erreur IA : ${e.toString()}'),
           backgroundColor: Colors.red));
     } finally {
-      setState(() => _isGenerating = false); // Arrête le chargement
+      setState(() => _isGenerating = false);
     }
   }
 
@@ -78,6 +109,10 @@ class _AdFormWidgetState extends State<AdFormWidget> {
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
+      // Petit check pour s'assurer que la description du controller est bien dans la map
+      _formData['description'] = _descriptionController.text;
+
       widget.onSubmit(_formData, _selectedImages);
     }
   }
@@ -91,20 +126,44 @@ class _AdFormWidgetState extends State<AdFormWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // --- CHAMPS DÉTAILS VÉHICULE (INCHANGÉ) ---
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Marque'),
-              validator: (v) => v!.trim().isEmpty ? 'La marque est requise' : null,
-              onSaved: (v) => _formData['brand'] = v!.trim(),
+
+            // --- 1. CHAMP MARQUE (DROPDOWN) ---
+            DropdownButtonFormField<String>(
+              value: _formData['brand'], // Utilise la valeur actuelle (null ou marque)
+              decoration: const InputDecoration(
+                labelText: 'Marque',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.car_rental),
+              ),
+              items: _knownBrands.map((brand) {
+                return DropdownMenuItem(
+                  value: brand,
+                  child: Text(brand),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _formData['brand'] = value;
+                });
+              },
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Veuillez sélectionner une marque'
+                  : null,
+              onSaved: (value) => _formData['brand'] = value,
             ),
+
             const SizedBox(height: 16),
+
+            // --- CHAMPS DÉTAILS VÉHICULE ---
             TextFormField(
+              initialValue: _formData['model'],
               decoration: const InputDecoration(labelText: 'Modèle'),
               validator: (v) => v!.trim().isEmpty ? 'Le modèle est requis' : null,
               onSaved: (v) => _formData['model'] = v!.trim(),
             ),
             const SizedBox(height: 16),
             TextFormField(
+              initialValue: _formData['year']?.toString(),
               decoration: const InputDecoration(labelText: 'Année'),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -113,6 +172,7 @@ class _AdFormWidgetState extends State<AdFormWidget> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              initialValue: _formData['mileage']?.toString(),
               decoration: const InputDecoration(labelText: 'Kilométrage'),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -121,6 +181,7 @@ class _AdFormWidgetState extends State<AdFormWidget> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              initialValue: _formData['price']?.toString(),
               decoration: const InputDecoration(labelText: 'Prix (€)'),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
@@ -140,7 +201,6 @@ class _AdFormWidgetState extends State<AdFormWidget> {
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
-              // 4. LE BOUTON AFFICHE UN CHARGEMENT
               child: TextButton.icon(
                 icon: _isGenerating
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
@@ -153,21 +213,20 @@ class _AdFormWidgetState extends State<AdFormWidget> {
 
             // --- SECTION RAPPORT DE DÉGÂTS ---
             TextFormField(
+              initialValue: _formData['damage_report'],
               decoration: const InputDecoration(
                 labelText: 'Rapport de dégâts (optionnel)',
                 hintText: 'Ex: Rayure portière droite, bosse pare-chocs...',
                 alignLabelWithHint: true,
               ),
               maxLines: 3,
-              // Utilise la fonction de formatage du service IA
               onSaved: (value) => _formData['damage_report'] = _aiService.formatDamageReport(value ?? ''),
             ),
             const SizedBox(height: 24),
 
-            // --- SECTION PHOTOS PROFESSIONNELLES (CONSEILS) ---
+            // --- SECTION PHOTOS ---
             const Text('Photos de l\'annonce (Optionnel)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            // Affiche les conseils récupérés depuis le service IA
             ..._aiService.getPhotoTips().map((tip) => Padding(
               padding: const EdgeInsets.only(bottom: 4.0),
               child: Row(
@@ -180,7 +239,6 @@ class _AdFormWidgetState extends State<AdFormWidget> {
             )).toList(),
 
             const SizedBox(height: 16),
-            // ... (Votre code existant pour ajouter et afficher les images)
 
             if (_selectedImages.isNotEmpty)
               SizedBox(
