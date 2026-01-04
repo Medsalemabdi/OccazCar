@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:occazcar/features/buyer/ui/ad_detail_screen.dart';
 import 'package:occazcar/features/buyer/ui/widgets/ad_card.dart';
 import 'package:occazcar/features/buyer/ui/widgets/filter_bottom_sheet.dart';
+import 'package:occazcar/features/notifications/services/alert_service.dart'; // Assurez-vous d'avoir créé ce fichier
+import 'package:occazcar/features/notifications/ui/my_alert_screen.dart';
 import 'package:occazcar/features/users/ui/user_profile_screen.dart';
 import 'package:occazcar/shared/widgets/app_logout_button.dart';
 
@@ -19,10 +21,49 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
     'brand': null,
     'model': null,
     'minPrice': 0.0,
-    'maxPrice': 500000.0,
+    'maxPrice': 500000.0, // 500k max
     'minYear': 1990,
     'maxYear': DateTime.now().year,
   };
+
+  // ===================== LOGIQUE ALERTE (NOUVEAU) =====================
+  Future<void> _saveAlert() async {
+    // Vérifier si un filtre minimal est appliqué (ex: au moins une marque)
+    if (_currentFilters['brand'] == null ||
+        _currentFilters['brand'].toString().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "Veuillez sélectionner au moins une marque pour créer une alerte.")),
+      );
+      return;
+    }
+
+    try {
+      final AlertService alertService = AlertService();
+      await alertService.createAlert(
+        brand: _currentFilters['brand'],
+        minPrice: (_currentFilters['minPrice'] as num?)?.toDouble(),
+        maxPrice: (_currentFilters['maxPrice'] as num?)?.toDouble(),
+        minYear: _currentFilters['minYear'] as int?,
+        maxYear: _currentFilters['maxYear'] as int?,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Alerte créée ! Vous serez notifié des nouveautés."),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Erreur: $e")));
+      }
+    }
+  }
 
   // ===================== LOGIQUE DE FILTRAGE =====================
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _applyFilters(
@@ -97,6 +138,19 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
     }
   }
 
+  // Helper pour afficher un résumé des filtres dans la barre de recherche
+  String _getFilterSummary() {
+    List<String> parts = [];
+    if (_currentFilters['brand'] != null) parts.add(_currentFilters['brand']);
+    if (_currentFilters['minPrice'] != null &&
+        (_currentFilters['minPrice'] as num) > 0) {
+      parts.add('> ${_currentFilters['minPrice']}€');
+    }
+
+    if (parts.isEmpty) return "Marque, modèle, prix...";
+    return parts.join(", ");
+  }
+
   // ===================== UI =====================
   @override
   Widget build(BuildContext context) {
@@ -115,8 +169,6 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
             letterSpacing: -0.5,
           ),
         ),
-        // Dans buyer_home_screen.dart -> AppBar -> actions
-
         actions: [
           // Bouton Messagerie
           IconButton(
@@ -126,7 +178,7 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
             },
           ),
 
-          // --- AJOUT : Bouton Profil ---
+          // Bouton Profil
           IconButton(
             icon: const Icon(Icons.person_outline, color: Colors.black87),
             onPressed: () {
@@ -137,63 +189,92 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
             },
           ),
 
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.black87),
+            tooltip: "Mes Alertes",
+            onPressed: () {
+              Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const MyAlertsScreen()),
+              );
+            },
+          ),
+
+
           // Bouton Logout
           const Padding(
             padding: EdgeInsets.only(right: 8.0),
             child: AppLogoutButton(),
           ),
         ],
-
       ),
       body: Column(
         children: [
-          // --- BARRE DE RECHERCHE / FILTRE ---
+          // --- BARRE DE RECHERCHE / FILTRE / ALERTE ---
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: InkWell(
-              onTap: _openFilters,
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Colors.blueAccent),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Partie Recherche (Cliquable pour ouvrir les filtres)
+                  Expanded(
+                    child: InkWell(
+                      onTap: _openFilters,
+                      child: Row(
                         children: [
-                          const Text(
-                            "Rechercher un véhicule",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                          const Icon(Icons.search, color: Colors.blueAccent),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Rechercher un véhicule",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  _getFilterSummary(), // Petit texte résumé
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                          ),
-                          Text(
-                            _getFilterSummary(), // Petit texte résumé
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    Container(
+                  ),
+
+                  // Séparateur vertical
+                  Container(
+                    height: 30,
+                    width: 1,
+                    color: Colors.grey[200],
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+
+                  // Bouton Filtre
+                  InkWell(
+                    onTap: _openFilters,
+                    child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: Colors.blue[50],
@@ -202,8 +283,25 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
                       child: const Icon(Icons.tune,
                           size: 20, color: Colors.blueAccent),
                     ),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  // --- BOUTON ALERTE (NOUVEAU) ---
+                  InkWell(
+                    onTap: _saveAlert,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange[50],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.notifications_active_outlined,
+                          size: 20, color: Colors.orange),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -222,7 +320,6 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
                   ),
                 ),
                 const Spacer(),
-                // Petit indicateur de nombre de résultats pourrait aller ici
               ],
             ),
           ),
@@ -256,7 +353,6 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
                     subtitle: 'Essayez de modifier vos filtres.',
                     action: TextButton.icon(
                       onPressed: () {
-                        // Reset simple
                         setState(() {
                           _currentFilters = {};
                         });
@@ -333,18 +429,5 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
         ],
       ),
     );
-  }
-
-  // Helper pour afficher un résumé des filtres dans la barre de recherche
-  String _getFilterSummary() {
-    List<String> parts = [];
-    if (_currentFilters['brand'] != null) parts.add(_currentFilters['brand']);
-    if (_currentFilters['minPrice'] != null &&
-        (_currentFilters['minPrice'] as num) > 0) {
-      parts.add('> ${_currentFilters['minPrice']}€');
-    }
-
-    if (parts.isEmpty) return "Marque, modèle, prix...";
-    return parts.join(", ");
   }
 }
