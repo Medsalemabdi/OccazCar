@@ -67,11 +67,11 @@ flutter pub get
 🔥 Configuration de Firebase avec FlutterFire CLI
 
 1. Prérequis
-# Installer Firebase CLI
+Installer Firebase CLI
 ```bash
 npm install -g firebase-tools
 ````
-# Se connecter à Firebase
+Se connecter à Firebase
 ```bash
 firebase login
 
@@ -88,7 +88,7 @@ flutterfire configure
 ```
 → Génère lib/firebase_options.dart et configure automatiquement Firebase pour les plateformes sélectionnées.
 
-# 3. Ajouter les dépendances Flutter
+3. Ajouter les dépendances Flutter
 
 ```bash
 
