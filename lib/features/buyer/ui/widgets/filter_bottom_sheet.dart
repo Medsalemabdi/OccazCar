@@ -24,14 +24,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   late double _currentMaxYear;
 
   final List<String> _brands = [
-    'Toyota',
-    'Peugeot',
-    'Renault',
-    'Volkswagen',
-    'BMW',
-    'Mercedes',
-    'Hyundai',
-    'Kia',
+    'Peugeot', 'Renault', 'Citroën', 'Volkswagen', 'Dacia',
+    'Toyota', 'Ford', 'BMW', 'Mercedes', 'Audi',
+    'Fiat', 'Hyundai', 'Kia', 'Nissan', 'Opel',
+    'Seat', 'Skoda', 'Suzuki', 'Mini', 'Volvo',
+    'Land Rover', 'Jeep', 'Tesla', 'Autre'
   ];
 
   @override

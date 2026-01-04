@@ -24,8 +24,16 @@ class _EditAdFormWidgetState extends State<EditAdFormWidget> {
   final _formKey = GlobalKey<FormState>();
   late Map<String, dynamic> _formData;
 
-  // Contrôleurs
-  late TextEditingController _brandController;
+  // --- LISTE DES MARQUES ---
+  final List<String> _knownBrands = [
+    'Peugeot', 'Renault', 'Citroën', 'Volkswagen', 'Dacia',
+    'Toyota', 'Ford', 'BMW', 'Mercedes', 'Audi',
+    'Fiat', 'Hyundai', 'Kia', 'Nissan', 'Opel',
+    'Seat', 'Skoda', 'Suzuki', 'Mini', 'Volvo',
+    'Land Rover', 'Jeep', 'Tesla', 'Autre'
+  ];
+
+  // Contrôleurs (Marque est gérée directement dans _formData)
   late TextEditingController _modelController;
   late TextEditingController _yearController;
   late TextEditingController _mileageController;
@@ -43,7 +51,7 @@ class _EditAdFormWidgetState extends State<EditAdFormWidget> {
     _formData = Map<String, dynamic>.from(widget.initialData);
 
     // Initialisation des contrôleurs
-    _brandController = TextEditingController(text: _formData['brand']);
+    // Note: _brandController supprimé car remplacé par Dropdown
     _modelController = TextEditingController(text: _formData['model']);
     _yearController = TextEditingController(text: _formData['year']?.toString());
     _mileageController = TextEditingController(text: _formData['mileage']?.toString());
@@ -59,7 +67,6 @@ class _EditAdFormWidgetState extends State<EditAdFormWidget> {
 
   @override
   void dispose() {
-    _brandController.dispose();
     _modelController.dispose();
     _yearController.dispose();
     _mileageController.dispose();
@@ -99,14 +106,34 @@ class _EditAdFormWidgetState extends State<EditAdFormWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // --- CHAMPS TEXTE (Inchangés) ---
-            TextFormField(
-              controller: _brandController,
-              decoration: const InputDecoration(labelText: 'Marque'),
-              validator: (v) => v!.isEmpty ? 'Requis' : null,
-              onSaved: (v) => _formData['brand'] = v!,
+            // --- 1. CHAMP MARQUE (DROPDOWN) ---
+            DropdownButtonFormField<String>(
+              value: _knownBrands.contains(_formData['brand']) ? _formData['brand'] : null, // Sécurité si la marque n'est pas dans la liste
+              decoration: const InputDecoration(
+                labelText: 'Marque',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.car_rental),
+              ),
+              items: _knownBrands.map((brand) {
+                return DropdownMenuItem(
+                  value: brand,
+                  child: Text(brand),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _formData['brand'] = value;
+                });
+              },
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Veuillez sélectionner une marque'
+                  : null,
+              onSaved: (value) => _formData['brand'] = value,
             ),
+
             const SizedBox(height: 16),
+
+            // --- AUTRES CHAMPS ---
             TextFormField(
               controller: _modelController,
               decoration: const InputDecoration(labelText: 'Modèle'),
