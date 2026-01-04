@@ -64,9 +64,9 @@ cd OccazCar
 flutter pub get
 ````
 ## 3. Configuration (Crucial Step)
-# 🔥 Configuration de Firebase avec FlutterFire CLI
+🔥 Configuration de Firebase avec FlutterFire CLI
 
-# 1. Prérequis
+1. Prérequis
 # Installer Firebase CLI
 npm install -g firebase-tools
 
@@ -76,8 +76,8 @@ firebase login
 # Installer FlutterFire CLI
 dart pub global activate flutterfire_cli
 
-# 2. Configuration du projet
-# Depuis la racine du projet Flutter
+2. Configuration du projet
+Depuis la racine du projet Flutter
 flutterfire configure
 → Génère lib/firebase_options.dart et configure automatiquement Firebase pour les plateformes sélectionnées.
 
