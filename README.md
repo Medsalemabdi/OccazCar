@@ -73,10 +73,11 @@ This project requires API keys and configuration files to function correctly.
    - `android/app/google-services.json`
 
 ### b) API Keys (Hugging Face)
-This project uses a `.env` file to securely manage API keys.
-
-1. Create a file named `.env` at the root of the project.
-2. Add your Hugging Face key
+b. Hugging Face API Key
+The Hugging Face API key is required for the AI-powered ad description generator.
+1.Open the file: lib/features/ia/ai_service.dart
+2.Find the _apiKey variable inside the AIService class.
+3.Replace the placeholder ********************** with your actual Hugging Face Read Token.
 
 ### c) Cloudinary Credentials
 The Cloudinary Cloud Name and Upload Preset are managed directly in the service file.
