@@ -139,7 +139,7 @@ service cloud.firestore {
 }
 
 
-
+```
 ### c) API Keys (Hugging Face)
 b. Hugging Face API Key
 The Hugging Face API key is required for the AI-powered ad description generator.
@@ -163,6 +163,7 @@ final cloudinary = CloudinaryPublic(
   'YOUR_CLOUDINARY_UPLOAD_PRESET', // Must be an "Unsigned" preset
   cache: false,
 );
+
 ````
 4. Run the App
 ```bash
