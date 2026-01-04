@@ -205,7 +205,6 @@ Copy sha256 and sha1 fingerprints and add them to app fingerprints in firebase
 
 5. Run the App
 
-````
-```bash
+````bash
 flutter run
 ````
