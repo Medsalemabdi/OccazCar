@@ -76,7 +76,7 @@ Log in to Firebase:
 firebase login
 
 ````
-Installer FlutterFire CLI
+Install FlutterFire CLI
 ```bash
 dart pub global activate flutterfire_cli
 
